@@ -1,0 +1,8 @@
+apiVersion: cluster.grid.sce.com/v1alpha1
+kind: AppVersion
+metadata:
+  name: foundation-version
+  namespace: default
+spec:
+  name: version
+  version: "25r05"
