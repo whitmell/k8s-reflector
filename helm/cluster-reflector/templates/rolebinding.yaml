@@ -1,0 +1,23 @@
+{{- if and .Values.rbac.create .Values.appDiscovery.enabled -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "cluster-reflector.roleName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cluster-reflector.labels" . | nindent 4 }}
+  {{- with include "cluster-reflector.annotations" . }}
+  {{- if . }}
+  annotations:
+    {{- . | nindent 4 }}
+  {{- end }}
+  {{- end }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "cluster-reflector.roleName" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "cluster-reflector.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

@@ -4,8 +4,6 @@
 *.dll
 *.so
 *.dylib
-cluster-reflector
-cluster-reflector-*
 
 # Test binary, built with `go test -c`
 *.test

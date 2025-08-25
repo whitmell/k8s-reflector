@@ -1,0 +1,28 @@
+{{- if and .Values.rbac.create .Values.appDiscovery.enabled -}}
+{{/*
+Optional namespaced role for leader election or other local operations
+This is only created if app discovery is enabled and might need local resources
+*/}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "cluster-reflector.roleName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cluster-reflector.labels" . | nindent 4 }}
+  {{- with include "cluster-reflector.annotations" . }}
+  {{- if . }}
+  annotations:
+    {{- . | nindent 4 }}
+  {{- end }}
+  {{- end }}
+rules:
+# ConfigMaps for leader election (if implemented in the future)
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+# Events for recording
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create", "patch"]
+{{- end }}

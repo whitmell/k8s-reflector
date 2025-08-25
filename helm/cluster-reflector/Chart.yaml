@@ -1,0 +1,21 @@
+apiVersion: v2
+name: cluster-reflector
+description: A Helm chart for cluster-reflector service that reports cluster metadata and app versions
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/yourorg/cluster-reflector
+sources:
+  - https://github.com/yourorg/cluster-reflector
+maintainers:
+  - name: Platform Team
+    email: platform@yourorg.com
+keywords:
+  - kubernetes
+  - cluster
+  - monitoring
+  - metadata
+  - reflector
+annotations:
+  category: Monitoring
+kubeVersion: ">=1.25.0"

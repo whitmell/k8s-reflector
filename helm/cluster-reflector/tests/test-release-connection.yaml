@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "cluster-reflector.fullname" . }}-test-connection"
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cluster-reflector.labels" . | nindent 4 }}
+    app.kubernetes.io/component: test
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  containers:
+    - name: wget
+      image: busybox:1.36
+      command: ['sh', '-c']
+      args:
+        - |
+          echo "Testing cluster-reflector service..."
+          
+          # Test health endpoint
+          echo "Checking health endpoint..."
+          wget --no-check-certificate -q --spider --timeout=30 --tries=3 \
+            http://{{ include "cluster-reflector.fullname" . }}:{{ .Values.service.port }}/healthz
+          
+          if [ $? -eq 0 ]; then
+            echo "✓ Health endpoint is responding"
+          else
+            echo "✗ Health endpoint failed"
+            exit 1
+          fi
+          
+          # Test cluster-info endpoint
+          echo "Checking cluster-info endpoint..."
+          wget --no-check-certificate -q --spider --timeout=30 --tries=3 \
+            http://{{ include "cluster-reflector.fullname" . }}:{{ .Values.service.port }}/cluster-info
+          
+          if [ $? -eq 0 ]; then
+            echo "✓ Cluster-info endpoint is responding"
+          else
+            echo "✗ Cluster-info endpoint failed"
+            exit 1
+          fi
+          
+          # Test that we can fetch actual data
+          echo "Fetching cluster-info data..."
+          RESPONSE=$(wget --no-check-certificate -qO- --timeout=30 --tries=3 \
+            http://{{ include "cluster-reflector.fullname" . }}:{{ .Values.service.port }}/cluster-info)
+          
+          if [ $? -eq 0 ] && [ -n "$RESPONSE" ]; then
+            echo "✓ Successfully retrieved cluster-info data"
+            echo "Sample response: $(echo "$RESPONSE" | head -c 200)..."
+          else
+            echo "✗ Failed to retrieve cluster-info data"
+            exit 1
+          fi
+          
+          echo "All tests passed successfully!"
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        readOnlyRootFilesystem: true
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - ALL

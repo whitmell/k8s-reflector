@@ -6,7 +6,7 @@
 image:
   # -- Container image repository
   repository: docker.shorebreak.dev/cluster-reflector
-  tag: "6ffb197-dirty"
+  tag: "b91316f"
   pullPolicy: IfNotPresent
 
 imagePullSecrets:

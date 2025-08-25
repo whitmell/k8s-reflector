@@ -1,0 +1,25 @@
+{{- if and .Values.pdb.enabled (gt (int .Values.replicaCount) 1) -}}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "cluster-reflector.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cluster-reflector.labels" . | nindent 4 }}
+  {{- with include "cluster-reflector.annotations" . }}
+  {{- if . }}
+  annotations:
+    {{- . | nindent 4 }}
+  {{- end }}
+  {{- end }}
+spec:
+  {{- if .Values.pdb.minAvailable }}
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  {{- end }}
+  {{- if .Values.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.pdb.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "cluster-reflector.selectorLabels" . | nindent 6 }}
+{{- end }}

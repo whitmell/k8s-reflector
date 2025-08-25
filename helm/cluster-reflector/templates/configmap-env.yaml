@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "cluster-reflector.fullname" . }}-env
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "cluster-reflector.labels" . | nindent 4 }}
+  {{- with include "cluster-reflector.annotations" . }}
+  {{- if . }}
+  annotations:
+    {{- . | nindent 4 }}
+  {{- end }}
+  {{- end }}
+data:
+  # Configuration values that would trigger pod restart when changed
+  CACHE_TTL: {{ .Values.cache.ttl | quote }}
+  LOG_LEVEL: {{ .Values.logLevel | quote }}
+  APP_DISCOVERY_ENABLED: {{ .Values.appDiscovery.enabled | quote }}
+  APP_DISCOVERY_PREFER_CRD: {{ .Values.appDiscovery.preferCRD | quote }}
+  APP_DISCOVERY_FALLBACK_WORKLOADS: {{ .Values.appDiscovery.fallbackWorkloads | quote }}
+  {{- if .Values.appDiscovery.namespaceSelector }}
+  APP_DISCOVERY_NAMESPACE_SELECTOR: {{ .Values.appDiscovery.namespaceSelector | quote }}
+  {{- end }}
+  WORKLOAD_KINDS: {{ join "," .Values.appDiscovery.workloadKinds | quote }}
