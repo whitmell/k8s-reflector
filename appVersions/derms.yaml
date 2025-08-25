@@ -1,8 +1,8 @@
 apiVersion: cluster.grid.sce.com/v1alpha1
 kind: AppVersion
 metadata:
-  name: foundation-version
+  name: derms-version
   namespace: default
 spec:
-  name: foundation
-  version: "25r05"
+  name: derms
+  version: "2.7.3"

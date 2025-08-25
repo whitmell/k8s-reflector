@@ -34,6 +34,11 @@ type ClusterDiscovery struct {
 
 // NewClusterDiscovery creates a new ClusterDiscovery instance
 func NewClusterDiscovery(cfg *types.Config, logger *logrus.Logger) (*ClusterDiscovery, error) {
+	// Validate configuration
+	if err := validateConfig(cfg); err != nil {
+		return nil, fmt.Errorf("invalid configuration: %w", err)
+	}
+	
 	// Get Kubernetes config
 	restConfig, err := config.GetConfig()
 	if err != nil {
@@ -78,6 +83,15 @@ func NewClusterDiscovery(cfg *types.Config, logger *logrus.Logger) (*ClusterDisc
 // Start begins the discovery process
 func (cd *ClusterDiscovery) Start(ctx context.Context) error {
 	cd.logger.Info("Starting cluster discovery")
+	
+	// Log discovery configuration
+	cd.logger.WithFields(logrus.Fields{
+		"preferCRD":        cd.config.PreferCRD,
+		"fallbackWorkloads": cd.config.FallbackWorkloads,
+		"crdOnly":          cd.config.CRDOnly,
+		"namespaceSelector": cd.config.NamespaceSelector,
+		"workloadKinds":    cd.config.WorkloadKinds,
+	}).Info("Discovery configuration")
 
 	// Initial refresh
 	if err := cd.refreshCache(ctx); err != nil {
@@ -229,11 +243,13 @@ func (cd *ClusterDiscovery) discoverApps(ctx context.Context) ([]types.App, erro
 		}
 	}
 
-	// Fallback to workload discovery if enabled
-	if cd.config.FallbackWorkloads {
+	// Fallback to workload discovery if enabled and not CRD-only mode
+	if cd.config.FallbackWorkloads && !cd.config.CRDOnly {
 		if err := cd.discoverAppsFromWorkloads(ctx, appMap); err != nil {
 			cd.logger.WithError(err).Error("Workload discovery failed")
 		}
+	} else if cd.config.CRDOnly {
+		cd.logger.Debug("CRD-only mode enabled, skipping workload discovery")
 	}
 
 	// Convert map to slice
@@ -490,5 +506,18 @@ func (cd *ClusterDiscovery) HealthCheck(ctx context.Context) error {
 		return fmt.Errorf("cache is stale (age: %s)", cacheAge)
 	}
 
+	return nil
+}
+
+// validateConfig validates the discovery configuration
+func validateConfig(cfg *types.Config) error {
+	if cfg.CRDOnly && !cfg.PreferCRD {
+		return fmt.Errorf("CRD-only mode requires preferCRD to be true")
+	}
+	
+	if cfg.CRDOnly && cfg.FallbackWorkloads {
+		logrus.Warn("CRD-only mode enabled but fallbackWorkloads is true - workloads will be ignored")
+	}
+	
 	return nil
 }

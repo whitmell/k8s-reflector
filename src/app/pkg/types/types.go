@@ -69,6 +69,7 @@ type Config struct {
 	NamespaceSelector   string
 	PreferCRD           bool
 	FallbackWorkloads   bool
+	CRDOnly             bool // If true, only discover from CRDs, ignore workloads
 	LogLevel            string
 	WorkloadKinds       []string
 	MetricsEnabled      bool
